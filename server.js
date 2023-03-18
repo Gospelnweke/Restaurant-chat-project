@@ -3,11 +3,8 @@ const path = require("path");
 require("dotenv").config();
 const http = require("http");
 const socketio = require("socket.io");
-const session = require("express-session");
-const sharedsession = require("express-socket.io-session");
-
 const PORT = process.env.PORT || 4000;
-const secret_key = process.env.SESSION_SECRET;
+
 const app = express();
 const msg = require("./utils/messages");
 
@@ -17,31 +14,12 @@ app.use(express.static(path.join(__dirname, "public")));
 const server = http.createServer(app);
 const io = socketio(server);
 
-const sessionMiddleware = session({
-  secret: secret_key,
-  resave: false,
-  saveUninitialized: true,
-});
-
-//app.use(express.static("public"));
-app.use(sessionMiddleware);
-
-io.use(
-  sharedsession(sessionMiddleware, {
-    autoSave: true,
-  })
-);
-
 const fastFoods = {
   2: "Pizza",
   3: "Fried Rice",
   4: "Burger",
   5: "Shawarma",
 };
-
-// io.use((socket, next) => {
-//   sessionMiddleware(socket.request, socket.request.res, next);
-// });
 
 // Run when client connects
 io.on("connection", (socket) => {
@@ -97,8 +75,7 @@ io.on("connection", (socket) => {
             } else {
               orderHistory.push(state.currentOrder);
               await botMessage("Order placed");
-              // socket.handshake.session.orderHistory = orderHistory;
-              // socket.handshake.session.save();
+
               //await botMessage("Order placed");
               state.currentOrder = [];
             }
@@ -107,7 +84,6 @@ io.on("connection", (socket) => {
             if (orderHistory.length === 0) {
               await botMessage("No previous orders");
             } else {
-              //const orderHistoryString = socket.handshake.session.orderHistory
               const orderHistoryString = orderHistory
                 .map(
                   (order, index) => `Order ${index + 1}. ${order.join(", ")}`
